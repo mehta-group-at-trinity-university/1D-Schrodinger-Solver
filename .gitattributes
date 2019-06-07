@@ -8,3 +8,4 @@
 *.o filter=lfs diff=lfs merge=lfs -text
 *.x filter=lfs diff=lfs merge=lfs -text
 *.pdf filter=lfs diff=lfs merge=lfs -text
+*.so filter=lfs diff=lfs merge=lfs -text
