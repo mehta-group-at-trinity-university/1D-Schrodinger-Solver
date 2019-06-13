@@ -1,7 +1,8 @@
 #LINUX
 #
+$(mkl)= /opt/intel.190611/mkl/lib/intel64
 1DSolver.x:	1DSolver.o
-	ifort 1DSolver.o  -Wl,--start-group $(MKLROOT)/lib/intel64/libmkl_intel_lp64.a $(MKLROOT)/lib/intel64/libmkl_sequential.a $(MKLROOT)/lib/intel64/libmkl_core.a $(MKLROOT)/lib/intel64/libmkl_blas95_ilp64.a -Wl,--end-group -lpthread -lm -parallel -o Solver.x
+	ifort 1DSolver.o  -Wl,--start-group $(MKL)/lib/intel64/libmkl_intel_lp64.a $(MKL)/lib/intel64/libmkl_sequential.a $(MKL)/lib/intel64/libmkl_core.a $(MKL)/lib/intel64/libmkl_blas95_ilp64.a -Wl,--end-group -lpthread -lm -parallel -o Solver.x
 
 1DSolver.o:	1DSolver.f90
 	ifort -O4 -extend_source -c -parallel 1DSolver.f90
