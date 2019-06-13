@@ -1,3 +1,17 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:6e0355652483a1f9090f7285a155d737210e383398c37fe6c6c8caa2f5bd657a
-size 753
+        !COMPILER-GENERATED INTERFACE MODULE: Thu Jun 13 13:13:32 2019
+        ! This source file is for reference only and may not completely
+        ! represent the generated interface used by the compiler.
+        MODULE DIFFERENTIATECHI__genmod
+          INTERFACE 
+            SUBROUTINE DIFFERENTIATECHI(HOLDER,NODES,NODE,I,SZ,XSUM,    &
+     &WEIGHTS)
+              INTEGER(KIND=4) :: SZ
+              REAL(KIND=8) :: HOLDER(SZ)
+              REAL(KIND=8) :: NODES(SZ)
+              REAL(KIND=8) :: NODE
+              INTEGER(KIND=4) :: I
+              REAL(KIND=8) :: XSUM
+              REAL(KIND=8) :: WEIGHTS(SZ)
+            END SUBROUTINE DIFFERENTIATECHI
+          END INTERFACE 
+        END MODULE DIFFERENTIATECHI__genmod
