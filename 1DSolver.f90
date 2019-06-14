@@ -3,33 +3,33 @@
 !Outputs can be eigenvalues  
 program Solver
 use mkl_spblas
-use IFLPORT
-use, intrinsic :: ISO_C_BINDING, ONLY : C_PTR, C_INT, C_DOUBLE
 implicit none
         real*8, allocatable :: nodesX(:), weightsX(:), nodesY(:), weightsY(:), nodesZ(:), &
-                weightsZ(:),holder(:),test(:),EigenVals(:),TmatS(:),TmatCol(:),TmatInd(:), &
-                Vsparse(:),jobs(:), res(:), & 
-                Hsparse(:)!, Hsparsee(:)
+                weightsZ(:),holder(:),EigenVals(:),TmatS(:),TmatCol(:),TmatInd(:), &
+                Vsparse(:),jobs(:), res(:), Hsparse(:)
         real*8, allocatable :: Xx(:,:),dXx(:,:),Xy(:,:),dXy(:,:),Xz(:,:),dXz(:,:), &
                 weightsDMX(:,:),weightsDMY(:,:),weightsDMZ(:,:),Hmat(:,:),EigenVecs(:,:), &
                 Tmat(:,:), TmatX(:,:),TmatY(:,:),TmatZ(:,:),dXxtrim(:,:), dXytrim(:,:), dXztrim(:,:)
         real*8, allocatable :: indexOf(:,:,:)
         real*8 :: n,w,valX,valXp,a,b,Tval,epsout,temp
-        integer :: i,j,k,ip,jp,kp,m,sX,sY,sZ,sMax,numN0,ijk,ijkp,sXc,sYc,sZc,info,loop,infoh,rCount,row,m0
-        integer, allocatable :: feastparam(:), Hrow(:), Hcol(:), Vrow(:), Vcol(:)!, Hroww(:), Hcoll(:)
-        integer :: HnumRow, HnumCol, indexing
-        !integer(C_INT) :: op
-        !real(C_DOUBLE) :: alpha
-        !type(C_PTR) :: Hb, He, Hcol
-        !type(C_PTR) :: Hsparse
-        type(sparse_matrix_t) :: HH, VH, TH
+        integer :: x,i,j,k,ip,jp,kp,m,sX,sY,sZ,sMax,numN0,ijk,ijkp,sXc,sYc,sZc,info,loop,infoh,rCount,row,m0
+        integer, allocatable :: feastparam(:), Hrow(:), Hcol(:), Vrow(:), Vcol(:)
+        integer :: HnumRow, HnumCol, indexing, Tstart, Tend
  
         open(unit=1,file="nodesAndWeights10.dat")
-        open(unit=2,file="GLnodesOut.dat")
+        open(unit=2,file="nodesAndWeights20.dat")
         open(unit=3,file="basisFuncsX.dat")
         open(unit=4,file="eigenValsOut.dat")
+        
 
-        read(1,*) sX
+        write(*,*) "enter rescale range"
+        read(*,*) a,b 
+
+        do x=1,2
+        print *, "starting set",x
+        call system_clock(Tstart)
+
+        read(x,*) sX
         sY=sX
         sZ=sX
         sXc=sX-2
@@ -37,49 +37,30 @@ implicit none
         sZc=sZ-2
         sMax=sXc*sYc*sZc
 
-        allocate(nodesX(sX),weightsX(sX),nodesY(sY),weightsY(sY),nodesZ(sZ),weightsZ(sZ),holder(sX),test(200), &
+        allocate(nodesX(sX),weightsX(sX),nodesY(sY),weightsY(sY),nodesZ(sZ),weightsZ(sZ),holder(sX), &
                 Xx(sX,sX),dXx(sX,sX),Xy(sY,sY),dXy(sY,sY),Xz(sZ,sZ),dXz(sZ,sZ), &
                 weightsDMX(sX,sX),weightsDMY(sY,sY),weightsDMZ(sZ,sZ), &
-                indexOf(sX-1,sY-1,sZ-1),Vsparse(sMax),Vrow(sMax),Vcol(sMax), &
-                Hmat(sMax,sMax), &
-                Tmat(sMax,sMax), TmatX(sXc,sXc), TmatY(sYc,sYc),TmatZ(sZc,sZc), &
-                dXxtrim(sXc,sX),dXytrim(sYc,sY),dXztrim(sZc,sZ))
+                indexOf(sX-1,sY-1,sZ-1),Vsparse(sMax),Vrow(sMax),Vcol(sMax),Hmat(sMax,sMax), &
+                TmatX(sXc,sXc), TmatY(sYc,sYc),TmatZ(sZc,sZc),dXxtrim(sXc,sX),dXytrim(sYc,sY),dXztrim(sZc,sZ))
 
         !read in data for each basis
         do i=1,sX
-                read(1,*) n,w
+                read(x,*) n,w
                 nodesX(i)=n
                 weightsX(i)=w
         end do
-      !  do i=1,sY
-      !          read(1,*) n,w
-      !          nodesY(i)=n
-      !          weightsY(i)=w
-      !  end do
-      !  do i=1,sZ
-      !          read(1,*) n,w
-      !          nodesZ(i)=n
-      !          weightsZ(i)=w
-      !  end do
         nodesY=nodesX
         weightsY=weightsX
         nodesZ=nodesX
         weightsZ=weightsX
         
         !rescale the basis functions to the desired range
-        write(*,*) "enter rescale range"
-        read(*,*) a,b 
         call rescale(sX,a,b,nodesX)
         call rescale(sY,a,b,nodesY)
         call rescale(sZ,a,b,nodesZ)
-        write(*,*) "rescaled"
+        !write(*,*) "rescaled"
         
-        !fill test array with 200 between a and b
-        !do i=1,200
-        !        test(i)=a+((b-a)/199)*(i-1)
-        !end do
-
-        !get matrix of nodes and derivatives
+        !build the DVR basis functions and their derivatives from the Gausian Lobatto nodes for each dimention
         do i=1,sX
                 do j=1,sX
                         call DVRFunctions(holder,nodesX,nodesX(j),i,sX,valX,weightsX)
@@ -108,47 +89,24 @@ implicit none
                 end do
         end do
 
-        print *, "got Chi's"
+        !print *, "got Chi's"
 
-        !Xxtrim = Xx(2:sX-1,1:sX)
-        !Xytrim = Xy(2:sY-1,1:sY)
-        !Xztrim = Xz(2:sZ-1,1:sZ)
+        !derivatives must be resized due to end points being non-continuous (imposed to zero)
         dXxtrim = dXx(2:sX-1,1:sX)
         dXytrim = dXy(2:sY-1,1:sY)
         dXztrim = dXz(2:sZ-1,1:sZ)
 
 
-
-        !get matris of derivitaves for test array
-        !do i=1,sz
-        !        do j=1,200
-        !                call DifferentiateChi(holder,nodes,test(j),i,sz,valXp,weights)
-        !                call LobattoProduct(holder,nodes,test(j),i,sz,valX,weights)
-!
-!                        dXGL(i,j)=valXp
-!                        write(2,*) test(j), valXp
-!                        write(3,*) test(j), valX
-!                end do
-!                write(2,*)
-!                write(3,*)
-!        end do
-        
-        !make index array and potential diag matrix
+        !make index array to help build Tsparse matrix
         row = 0
         do i=1,sXc
                 do j=1,sYc
                         do k=1,sZc
                                 row=row+1
                                 indexOf(i,j,k)=row
-                                Call V3d(nodesX(i),nodesY(j),nodesZ(k),valX)
-                                Vsparse(row)=valX
-                                Vrow(row)=row
-                                Vcol(row)=row
                         end do
                 end do
         end do
-
-        print *, "Got V"
 
         !make T kenetic evergy matrix for each dimenstion
         !first make diagonal weight matrices
@@ -179,11 +137,15 @@ implicit none
                         end if
                 end do
         end do
-        !now make the Tmat for each dimention
+        !now make the Tmat for each dimention 
+        !- this formula comes from integration by parts, and the surface term goes to zero
         TmatX = (0.5d0)*MATMUL(dXytrim,MATMUL(weightsDMX,TRANSPOSE(dXxtrim)))
         TmatY = (0.5d0)*MATMUL(dXytrim,MATMUL(weightsDMY,TRANSPOSE(dXytrim)))
         TmatZ = (0.5d0)*MATMUL(dXztrim,MATMUL(weightsDMZ,TRANSPOSE(dXztrim)))
-        !now combine them using delta properties
+        
+        !now combine them using delta properties, and construct the Hsparse matrices explicitly, 
+        !skipping creating T or V matrices
+        !first loop is a fake to find array sizes to allocate memory, then second loop makes H
         numN0=0
         row=0
         rCount=1
@@ -192,30 +154,24 @@ implicit none
                         do j=1,sYc
                                 do k=1,sZc
                                         row=row+1
-                                        if(m==2) then
-                                                !Hrow(row)=rCount
-                                        end if
                                         do ip=1,sXc
                                                 do jp=1,sYc
                                                         do kp=1,sZc
                                                                 ijk=indexOf(i,j,k)
                                                                 ijkp=indexOf(ip,jp,kp)
                                                                 temp = 0d0
-                                                                !Tmat(ijk,ijkp)=0d0
                                                                 if((j==jp).and.(k==kp)) then
-                                                                        !Tmat(ijk,ijkp)=Tmat(ijk,ijkp)+TmatX(i,ip)
                                                                         temp=temp+TmatX(i,ip)
                                                                 end if
                                                                 if((i==ip).and.(k==kp)) then
-                                                                        !Tmat(ijk,ijkp)=Tmat(ijk,ijkp)+TmatY(j,jp)
                                                                         temp=temp+TmatY(j,jp)
                                                                 end if
                                                                 if((j==jp).and.(i==ip)) then
-                                                                        !Tmat(ijk,ijkp)=Tmat(ijk,ijkp)+TmatZ(k,kp)
                                                                         temp=temp+TmatZ(k,kp)
                                                                 end if
                                                                 if((i==ip).and.(j==jp).and.(k==kp)) then
-                                                                        temp=temp+Vsparse(ijk)
+                                                                        Call V3d(nodesX(i),nodesY(j),nodesZ(k),valX)
+                                                                        temp=temp+valX
                                                                 end if
                                                                 if(temp /= 0) then
                                                                         numN0=numN0+1
@@ -241,73 +197,41 @@ implicit none
                         rCount=1
                 end if
         end do
+        !sum up row counts for Hrow
         do i=2,sMax+1
                 Hrow(i)=Hrow(i)+Hrow(i-1)
         end do
 
-        print *, "Got H"
-        m0=100
-        allocate(EigenVals(m0),EigenVecs(sMAx,m0),res(m0))
+        !print *, "Got H"
+        !print *, "If",size(Hsparse)," =",Hrow(sMax+1)-1," =",size(Hcol)," then good"
+
         
-        print *, Hsparse(1)
-        
-        !make handles for T and V
-        !info = mkl_sparse_d_create_csr(TH,1,sMax,sMax,Trow,Trow+1,Tcol,Tsparse)
-        !print *, "TH: ",info
-        !info = mkl_sparse_d_create_csr(VH,1,sMax,sMax,Vrow,Vrow+1,Vcol,Vsparse)
-        !print *, "VH: ",info
-
-        !allocate(Hroww(numN0+sMax),Hcoll(numN0+sMax),Hsparsee(numN0+sMax))
-        !info = mkl_sparse_d_create_csr(HH,1,sMax,sMax,Hroww,Hroww+1,Hcoll,Hsparsee)
-        !print *, "HH: ",info
-        !allocate(Hb(numN0),He(numN0),Hcol(numN0),Hsparse(numN0))
-        !call mkl_sparse_d_export_csr(TH,indexing,HnumRow,HnumCol,Hb,He,Hcol,Hsparse)
-        !print *, Hsparse(1), HnumRow, Hcol(1)
-
-        !add T and V to get H
-        !call mkl_dcsradd('n',2,3,sMax,sMax,Tsparse,Tcol,Trow,1d0,Vsparse,Vcol,Vrow,Hsparse,Hcol,Hind,10000000000000,infoh)
-        !op=10
-        !alpha = 1d0
-        !print *, TH, VH, HH
-        !info = mkl_sparse_d_add(op,TH,alpha,VH,HH)
-        !print *, "added: ", info
-
-        !allocate(Hb(numN0),He(numN0),Hcol(numN0),Hsparse(numN0))
-        !get Hsparse from the handle HH
-        !info = mkl_sparse_d_export_csr(HH,indexing,HnumRow,HnumCol,Hb,He,Hcol,Hsparse)
-        !print *, "Hsparse: ",info
-       ! if(associated(Hsparse))then
-       !         print *, "true"
-       ! else 
-       !         print*, "fals"
-       ! end if
-
-        allocate(feastparam(64))
-        !setup solver
+        !set up solver and call solver
+        m0=500
+        allocate(EigenVals(m0),EigenVecs(sMAx,m0),res(m0),feastparam(64))
         call feastinit(feastparam)
-        !print *, fpm
-        
-        !call solver
-        print *, size(Hsparse)
-        print *, Hrow(sMax+1)-1
-        print *, size(Hcol)
-
         feastparam(1)=1
         feastparam(2)=20
-        feastparam(4)=3
+        !feastparam(4)=3
         feastparam(17)=0
         call dfeast_scsrev('F',sMax,Hsparse,Hrow,Hcol,feastparam,epsout,loop,0d0,10d0,m0,EigenVals,EigenVecs,m,res,info)
         
-        print *, "info: ",info
+        !print *, "info: ",info
 
-!       call MyDSYEV(Hmat,SZ,EigenVals,EigenVecs)
+        do i=1,1
+         print *, EigenVals(i)
+         print *, "deltaE",(EigenVals(i)-1.5d0)/1.5d0
+        end do
+        deallocate(EigenVals,EigenVecs,res,feastparam,Hsparse,Hcol,Hrow, &
+                nodesX,weightsX,nodesY,weightsY,nodesZ,weightsZ,holder, &
+                Xx,dXx,Xy,dXy,Xz,dXz,weightsDMX,weightsDMY,weightsDMZ, &
+                indexOf,Vsparse,Vrow,Vcol,Hmat,TmatX,TmatY,TmatZ, &
+                dXxtrim,dXytrim,dXztrim)
         
-
- !       do i=1,sz
-         print *, EigenVals(1)
-         print *, EigenVals(2)
-         !print *, Tmat(1,1)
-   !     end do
+        call system_clock(Tend)
+        print *, "finished set",x
+        print *, "took",Tend-Tstart,"seconds"
+        end do
 
         close(1)
         close(2)
