@@ -5,16 +5,15 @@ program Solver
 use mkl_spblas
 implicit none
         real*8, allocatable :: nodesX(:), weightsX(:), nodesY(:), weightsY(:), nodesZ(:), &
-                weightsZ(:),holder(:),EigenVals(:),TmatS(:),TmatCol(:),TmatInd(:), &
-                Vsparse(:),jobs(:), res(:), Hsparse(:)
+                weightsZ(:),holder(:),EigenVals(:),Vsparse(:), res(:), Hsparse(:)
         real*8, allocatable :: Xx(:,:),dXx(:,:),Xy(:,:),dXy(:,:),Xz(:,:),dXz(:,:), &
                 weightsDMX(:,:),weightsDMY(:,:),weightsDMZ(:,:),Hmat(:,:),EigenVecs(:,:), &
-                Tmat(:,:), TmatX(:,:),TmatY(:,:),TmatZ(:,:),dXxtrim(:,:), dXytrim(:,:), dXztrim(:,:)
+                TmatX(:,:),TmatY(:,:),TmatZ(:,:),dXxtrim(:,:), dXytrim(:,:), dXztrim(:,:)
         real*8, allocatable :: indexOf(:,:,:)
-        real*8 :: n,w,valX,valXp,a,b,Tval,epsout,temp
-        integer :: x,i,j,k,ip,jp,kp,m,sX,sY,sZ,sMax,numN0,ijk,ijkp,sXc,sYc,sZc,info,loop,infoh,rCount,row,m0
+        real*8 :: n,w,valX,valXp,a,b,epsout,temp
+        integer :: x,i,j,k,ip,jp,kp,m,sX,sY,sZ,sMax,numN0,ijk,ijkp,sXc,sYc,sZc,info,loop,rCount,row,m0
         integer, allocatable :: feastparam(:), Hrow(:), Hcol(:), Vrow(:), Vcol(:)
-        integer :: HnumRow, HnumCol, indexing, Tstart, Tend
+        real*4 :: Tstart, Tend
  
         open(unit=1,file="nodesAndWeights10.dat")
         open(unit=2,file="nodesAndWeights20.dat")
@@ -32,9 +31,11 @@ implicit none
         write(*,*) "enter rescale range"
         read(*,*) a,b 
 
-        do x=1,2
+        !do x=1,1
+        x=1
+
         print *, "starting set",x
-        call system_clock(Tstart)
+        call cpu_time(Tstart)
 
         read(x,*) sX
         sY=sX
@@ -224,20 +225,19 @@ implicit none
         call dfeast_scsrev('F',sMax,Hsparse,Hrow,Hcol,feastparam,epsout,loop,0d0,10d0,m0,EigenVals,EigenVecs,m,res,info)
         
         !print *, "info: ",info
-        call system_clock(Tend)
+        call cpu_time(Tend)
         print *, "finished set",x
         print *, "Time elapsed:",Tend-Tstart
-
+        
         print *, EigenVals(1)
         write (100,*) sX,(EigenVals(1)-1.5d0)/1.5d0,Tend-Tstart
-
-        deallocate(EigenVals,EigenVecs,res,feastparam,Hsparse,Hcol,Hrow, &
-                nodesX,weightsX,nodesY,weightsY,nodesZ,weightsZ,holder, &
-                Xx,dXx,Xy,dXy,Xz,dXz,weightsDMX,weightsDMY,weightsDMZ, &
-                indexOf,Vsparse,Vrow,Vcol,Hmat,TmatX,TmatY,TmatZ, &
-                dXxtrim,dXytrim,dXztrim)
+!        deallocate(EigenVals,EigenVecs,res,feastparam,Hsparse,Hcol,Hrow, &
+ !               nodesX,weightsX,nodesY,weightsY,nodesZ,weightsZ,holder, &
+  !              Xx,dXx,Xy,dXy,Xz,dXz,weightsDMX,weightsDMY,weightsDMZ, &
+   !             indexOf,Vsparse,Vrow,Vcol,Hmat,TmatX,TmatY,TmatZ, &
+    !            dXxtrim,dXytrim,dXztrim)
         
-        end do
+        !end do
 
         close(1)
         close(2)

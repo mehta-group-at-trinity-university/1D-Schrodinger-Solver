@@ -5,8 +5,7 @@
 #	ifort 1DSolver.o  -Wl,--start-group $(MKL)/libmkl_intel_lp64.a $(MKL)/libmkl_sequential.a $(MKL)/libmkl_core.a $(MKL)/libmkl_blas95_ilp64.a $(MKL)/libmkl_lapack95_ilp64.a -Wl,--end-group -lpthread -lm -parallel -o Solver.x
 
 1DSolver.x:	1DSolver.f90
-	ifort -o Solver.x 1DSolver.f90 -mkl
-
+	ifort -O4 -o Solver.x 1DSolver.f90 -mkl -check arg_temp_created -g -traceback -warn all -check all -heap-arrays -debug extended
 #1DSolver.o:	1DSolver.f90
 #	ifort 1DSolver.f90 -mkl
 #
