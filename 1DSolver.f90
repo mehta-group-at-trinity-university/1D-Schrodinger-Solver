@@ -32,7 +32,7 @@ implicit none
         write(*,*) "enter rescale range"
         read(*,*) a,b 
 
-        do x=1,1
+        do x=1,2
         print *, "starting set",x
         call system_clock(Tstart)
 
@@ -229,7 +229,7 @@ implicit none
         print *, "Time elapsed:",Tend-Tstart
 
         print *, EigenVals(1)
-        write (100,*) n,(EigenVals(1)-1.5d0)/1.5d0,Tend-Tstart
+        write (100,*) sX,(EigenVals(1)-1.5d0)/1.5d0,Tend-Tstart
 
         deallocate(EigenVals,EigenVecs,res,feastparam,Hsparse,Hcol,Hrow, &
                 nodesX,weightsX,nodesY,weightsY,nodesZ,weightsZ,holder, &
