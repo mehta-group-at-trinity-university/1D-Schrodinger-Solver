@@ -20,4 +20,4 @@
 #1DSolver.exe:	1DSolver.f90 
 #	ifort 1DSolver.f90 -Qmkl
 clean:
-	rm *.obj *.un~ *.o *__genmod.mod *__genmod.f90 *.pdb
+	rm *.x *.exe *.out *.obj *.un~ *.o *__genmod.mod *__genmod.f90 *.pdb
