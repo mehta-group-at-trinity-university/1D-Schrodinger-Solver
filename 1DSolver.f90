@@ -25,7 +25,7 @@ implicit none
         write(*,*) "enter rescale range"
         read(*,*) a,b 
 
-        do x=1,2
+        do x=1,1
         print *, "starting set",x
         call system_clock(Tstart)
 
@@ -230,7 +230,8 @@ implicit none
         
         call system_clock(Tend)
         print *, "finished set",x
-        print *, "took",Tend-Tstart,"seconds"
+        print *, "Time elapsed:",Tend-Tstart
+        print *, ""
         end do
 
         close(1)
