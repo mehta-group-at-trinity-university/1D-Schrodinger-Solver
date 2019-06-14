@@ -18,9 +18,16 @@ implicit none
  
         open(unit=1,file="nodesAndWeights10.dat")
         open(unit=2,file="nodesAndWeights20.dat")
-        open(unit=3,file="basisFuncsX.dat")
-        open(unit=4,file="eigenValsOut.dat")
+        open(unit=3,file="nodesAndWeights30.dat")
+        open(unit=4,file="nodesAndWeights40.dat")
+        open(unit=5,file="nodesAndWeights50.dat")
+        open(unit=6,file="nodesAndWeights60.dat")
+        open(unit=7,file="nodesAndWeights70.dat")
+        open(unit=8,file="nodesAndWeights80.dat")
+        open(unit=9,file="nodesAndWeights90.dat")
+        open(unit=10,file="nodesAndWeights100.dat")
         
+        open(unit=100,file="dataOut.dat")
 
         write(*,*) "enter rescale range"
         read(*,*) a,b 
@@ -217,27 +224,32 @@ implicit none
         call dfeast_scsrev('F',sMax,Hsparse,Hrow,Hcol,feastparam,epsout,loop,0d0,10d0,m0,EigenVals,EigenVecs,m,res,info)
         
         !print *, "info: ",info
+        call system_clock(Tend)
+        print *, "finished set",x
+        print *, "Time elapsed:",Tend-Tstart
 
-        do i=1,1
-         print *, EigenVals(i)
-         print *, "deltaE",(EigenVals(i)-1.5d0)/1.5d0
-        end do
+        print *, EigenVals(1)
+        write (100,*) n,(EigenVals(1)-1.5d0)/1.5d0,Tend-Tstart
+
         deallocate(EigenVals,EigenVecs,res,feastparam,Hsparse,Hcol,Hrow, &
                 nodesX,weightsX,nodesY,weightsY,nodesZ,weightsZ,holder, &
                 Xx,dXx,Xy,dXy,Xz,dXz,weightsDMX,weightsDMY,weightsDMZ, &
                 indexOf,Vsparse,Vrow,Vcol,Hmat,TmatX,TmatY,TmatZ, &
                 dXxtrim,dXytrim,dXztrim)
         
-        call system_clock(Tend)
-        print *, "finished set",x
-        print *, "Time elapsed:",Tend-Tstart
-        print *, ""
         end do
 
         close(1)
         close(2)
         close(3)
         close(4)
+        close(5)
+        close(6)
+        close(7)
+        close(8)
+        close(9)
+        close(10)
+        close(100)
 end program Solver
 
 
